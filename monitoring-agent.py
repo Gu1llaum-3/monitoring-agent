@@ -128,10 +128,10 @@ def get_system_metrics():
         disk_total = disk.total
         disk_free = disk.free
         uptime_seconds = int(time.time() - psutil.boot_time())
-        
+
         # Récupérer les métriques de mise à jour
         update_metrics = get_update_metrics()
-        
+
         metrics = {
             "hostname": hostname,
             "ip_address": ip_address,
@@ -149,37 +149,48 @@ def get_system_metrics():
 
         msg = f"État des mises à jour - Total: {update_metrics['total_updates']}, Sécurité: {update_metrics['security_updates']}, Redémarrage requis: {'Oui' if update_metrics['reboot_required'] else 'Non'}"
         logging.info(msg)
-        
+
         logging.debug(f"Métriques collectées: {metrics}")
         return metrics
     except Exception as e:
         logging.error(f"Erreur lors de la collecte des métriques: {e}")
         return None
 
+import os
+import sys
+import subprocess
+
 def create_systemd_service(config):
-    """ Crée et démarre le service systemd """
+    """ Crée et démarre le service systemd en utilisant le chemin actuel du binaire """
+
     service_name = "agent_monitor"
     service_path = f"/etc/systemd/system/{service_name}.service"
-    if not os.path.exists(service_path):
-        service_content = f"""[Unit]
+
+    # Détecte automatiquement le chemin du binaire
+    bin_path = os.path.abspath(sys.argv[0])  # Chemin réel du binaire compilé
+
+    service_content = f"""[Unit]
 Description=Agent de Monitoring
 After=network.target
 
 [Service]
-ExecStart={sys.executable} {os.path.abspath(__file__)} --url {config['server_url']} --port {config['port']} --token {config['token']}
+ExecStart={bin_path} --url {config['server_url']} --port {config['port']} --token {config['token']}
 Restart=always
 User=root
 Group=root
-WorkingDirectory={os.path.dirname(os.path.abspath(__file__))}
+WorkingDirectory={os.path.dirname(bin_path)}
 
 [Install]
 WantedBy=multi-user.target
 """
-        with open(service_path, "w") as f:
-            f.write(service_content)
-        subprocess.run(["sudo", "systemctl", "daemon-reload"])
-        subprocess.run(["sudo", "systemctl", "enable", service_name])
+
+    with open(service_path, "w") as f:
+        f.write(service_content)
+
+    subprocess.run(["sudo", "systemctl", "daemon-reload"])
+    subprocess.run(["sudo", "systemctl", "enable", service_name])
     subprocess.run(["sudo", "systemctl", "start", service_name])
+
     print("Service systemd installé et démarré.")
     subprocess.run(["sudo", "systemctl", "status", service_name])
     print(f"Les logs se trouvent ici : {config['log_file']}")
@@ -224,20 +235,20 @@ def main():
             # Calculer le temps jusqu'à la prochaine minute
             current_time = time.time()
             current_dt = datetime.fromtimestamp(current_time)
-            
+
             # Calculer les minutes à attendre basé sur l'intervalle
             minutes_to_wait = interval_minutes - (current_dt.minute % interval_minutes)
             if minutes_to_wait == interval_minutes and current_dt.second == 0:
                 minutes_to_wait = 0
-            
+
             # Calculer le temps jusqu'au prochain intervalle
             next_collection = current_time + (minutes_to_wait * 60) - current_dt.second
-            
+
             # Attendre jusqu'au prochain intervalle
             sleep_time = next_collection - current_time
             if sleep_time > 0:
                 time.sleep(sleep_time)
-            
+
             # Collecter et envoyer les métriques
             metrics = get_system_metrics()
             if metrics:
