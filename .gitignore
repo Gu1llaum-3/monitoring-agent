@@ -1,0 +1,46 @@
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environnements virtuels
+venv/
+.env/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Configurations de l'éditeur
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Logs et fichiers temporaires
+*.log
+logs/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Fichiers de build et distribution
+build/
+dist/
+*.spec
+*.egg-info/
+*.egg
+
+# PyInstaller
+*.manifest
+*.db
+*.dll
+*.so
+*.pyd
+*.o
+*.pyo
+*.cache
+*.c
+*.h
+*.pdb
+
+# Exclure les fichiers générés par PyInstaller
+output/
