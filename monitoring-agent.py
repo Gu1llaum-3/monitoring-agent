@@ -156,10 +156,6 @@ def get_system_metrics():
         logging.error(f"Erreur lors de la collecte des métriques: {e}")
         return None
 
-import os
-import sys
-import subprocess
-
 def create_systemd_service(config):
     """ Crée et démarre le service systemd en utilisant le chemin actuel du binaire """
 
