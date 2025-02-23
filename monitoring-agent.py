@@ -86,16 +86,17 @@ def get_system_ip():
     return ip_address if ip_address else socket.gethostbyname(socket.gethostname())
 
 def get_update_metrics():
-    """ Collecte les métriques de mises à jour système """
+    """Collecte les métriques de mises à jour système"""
     try:
-        # Vérifier le nombre total de paquets à mettre à jour
-        update_cmd = ["apt", "list", "--upgradable"]
-        update_output = subprocess.check_output(update_cmd, stderr=subprocess.DEVNULL).decode()
-        # Filtrer les lignes non vides et exclure la ligne d'entête
-        updates_lines = [line for line in update_output.split('\n') if line.strip() and not line.startswith('Listing...')]
+        # Exécuter `apt-get --just-print upgrade` pour éviter les problèmes de langue
+        update_cmd = ["apt-get", "--just-print", "upgrade"]
+        update_output = subprocess.check_output(update_cmd, stderr=subprocess.DEVNULL, text=True)
+        
+        # Compter les lignes contenant "Inst", qui indique une mise à jour
+        updates_lines = [line for line in update_output.split('\n') if line.startswith("Inst")]
         total_updates = len(updates_lines)
 
-        # Filtrer les mises à jour de sécurité (en recherchant "security" dans la ligne, insensible à la casse)
+        # Déterminer les mises à jour de sécurité (celles qui contiennent "security")
         security_updates = len([line for line in updates_lines if "security" in line.lower()])
 
         # Vérifier si un redémarrage est nécessaire
